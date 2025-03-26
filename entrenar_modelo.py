@@ -1,3 +1,4 @@
+
 from tensorflow import keras
 from tensorflow.keras import layers, callbacks, regularizers
 import tensorflow as tf
@@ -103,3 +104,61 @@ plt.xlabel('Epochs')
 plt.ylabel('Accuracy')
 plt.legend()
 plt.show()
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import os
+
+# Rutas
+train_dir = r'C:\Users\billy\detector_emociones\fer2013\train'
+modelo_guardado = r'C:\Users\billy\detector_emociones\modelo_entrenado\modelo_emociones.h5'
+
+# Preprocesamiento de imágenes
+datagen = ImageDataGenerator(rescale=1.0/255, validation_split=0.2)
+
+train_generator = datagen.flow_from_directory(
+    train_dir,
+    target_size=(48, 48),
+    batch_size=64,
+    color_mode='grayscale',
+    class_mode='categorical',
+    subset='training'
+)
+
+val_generator = datagen.flow_from_directory(
+    train_dir,
+    target_size=(48, 48),
+    batch_size=64,
+    color_mode='grayscale',
+    class_mode='categorical',
+    subset='validation'
+)
+
+# Modelo CNN
+modelo = keras.Sequential([
+    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(48, 48, 1)),
+    layers.MaxPooling2D(2, 2),
+    layers.Conv2D(64, (3, 3), activation='relu'),
+    layers.MaxPooling2D(2, 2),
+    layers.Conv2D(128, (3, 3), activation='relu'),
+    layers.MaxPooling2D(2, 2),
+    layers.Flatten(),
+    layers.Dense(128, activation='relu'),
+    layers.Dropout(0.5),
+    layers.Dense(7, activation='softmax')  # 7 emociones
+])
+
+modelo.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Entrenamiento
+historial = modelo.fit(train_generator, validation_data=val_generator, epochs=20)
+
+# Guardar el modelo
+modelo.save(modelo_guardado)
+print(f"Modelo guardado en: {modelo_guardado}")
+
+
